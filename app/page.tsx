@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import InputForm from '@/components/InputForm';
-import GanttChart from '@/components/GanttChart';
+import PieChart from '@/components/PieChart';
 import MetricsTable from '@/components/MetricsTable';
 import ComparisonView from '@/components/ComparisonView';
 import PlaybackControls from '@/components/PlaybackControls';
@@ -111,8 +111,8 @@ export default function Home() {
                 key={mode}
                 onClick={() => setViewMode(mode as ViewMode)}
                 className={`px-4 py-1.5 rounded-full text-xs font-mono tracking-wider transition-all border ${viewMode === mode
-                    ? 'bg-blue-500/20 border-blue-500 text-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
-                    : 'border-gray-700 text-gray-500 hover:border-gray-500'
+                  ? 'bg-blue-500/20 border-blue-500 text-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
+                  : 'border-gray-700 text-gray-500 hover:border-gray-500'
                   }`}
               >
                 {mode.toUpperCase()}
@@ -144,17 +144,17 @@ export default function Home() {
             {/* MIDDLE COLUMN: Visualization (Span 6) */}
             <div className="lg:col-span-6 space-y-6">
 
-              {/* Gantt Chart Area */}
-              <div className="glass-panel p-1 rounded-xl shadow-lg min-h-[160px] flex flex-col justify-center relative overflow-hidden">
+              {/* Pie Chart Area */}
+              <div className="glass-panel p-1 rounded-xl shadow-lg min-h-[500px] flex flex-col justify-center relative overflow-hidden">
                 {/* Background Grid Lines */}
                 <div className="absolute inset-0 opacity-10"
                   style={{ backgroundImage: 'linear-gradient(#4b5563 1px, transparent 1px), linear-gradient(90deg, #4b5563 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
                 </div>
 
                 <div className="p-4 relative z-10">
-                  <h2 className="text-xs font-mono text-gray-500 mb-2 uppercase tracking-widest text-right">CPU Timeline</h2>
+                  <h2 className="text-xs font-mono text-gray-500 mb-6 uppercase tracking-widest text-center">CPU Time Distribution</h2>
                   {schedulerResult ? (
-                    <GanttChart blocks={visibleBlocks} />
+                    <PieChart blocks={visibleBlocks} />
                   ) : (
                     <div className="text-center text-gray-600 font-mono text-xs py-10">
                       [SYSTEM HALTED] <br /> PRESS RUN TO INITIALIZE SEQUENCE
