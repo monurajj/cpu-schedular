@@ -8,10 +8,13 @@ import ComparisonView from '@/components/ComparisonView';
 import PlaybackControls from '@/components/PlaybackControls';
 import ReadyQueue from '@/components/ReadyQueue';
 import StatsCharts from '@/components/StatsCharts';
+import MemoryBlock from '@/components/MemoryBlock';
+import PCBView from '@/components/PCBView';
 import {
   Process,
   SchedulerResult,
-  AlgorithmType
+  AlgorithmType,
+  ProcessState
 } from '@/lib/types';
 import {
   fcfsResponse,
@@ -26,9 +29,9 @@ type ViewMode = 'visualizer' | 'comparison';
 
 export default function Home() {
   const [processes, setProcesses] = useState<Process[]>([
-    { id: 'P1', arrivalTime: 0, burstTime: 5, priority: 1, color: '#3b82f6' },
-    { id: 'P2', arrivalTime: 1, burstTime: 3, priority: 2, color: '#22c55e' },
-    { id: 'P3', arrivalTime: 2, burstTime: 8, priority: 1, color: '#eab308' },
+    { id: 'P1', arrivalTime: 0, priority: 1, color: '#3b82f6', bursts: [{ type: 'CPU', duration: 5 }], memoryRequired: 128 },
+    { id: 'P2', arrivalTime: 1, priority: 2, color: '#22c55e', bursts: [{ type: 'CPU', duration: 3 }], memoryRequired: 256 },
+    { id: 'P3', arrivalTime: 2, priority: 1, color: '#eab308', bursts: [{ type: 'CPU', duration: 8 }], memoryRequired: 64 },
   ]);
 
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<AlgorithmType>('FCFS');
@@ -43,35 +46,17 @@ export default function Home() {
   const handleRunSimulation = () => {
     let result: SchedulerResult;
 
-    // Sort input processes by Arrival Time for consistent processing
-    // const sortedProcesses = [...processes].sort((a, b) => a.arrivalTime - b.arrivalTime);
-    // Actually the algorithms sort them internally, so passing as is is fine.
-
     switch (selectedAlgorithm) {
-      case 'FCFS':
-        result = fcfsResponse(processes);
-        break;
-      case 'SJF':
-        result = sjfResponse(processes);
-        break;
-      case 'SRTF':
-        result = srtfResponse(processes);
-        break;
-      case 'Priority-NP':
-        result = priorityNonPreemptiveResponse(processes);
-        break;
-      case 'Priority-P':
-        result = priorityPreemptiveResponse(processes);
-        break;
-      case 'RR':
-        result = roundRobinResponse(processes, timeQuantum);
-        break;
-      default:
-        result = fcfsResponse(processes);
+      case 'FCFS': result = fcfsResponse(processes); break;
+      case 'SJF': result = sjfResponse(processes); break;
+      case 'SRTF': result = srtfResponse(processes); break;
+      case 'Priority-NP': result = priorityNonPreemptiveResponse(processes); break;
+      case 'Priority-P': result = priorityPreemptiveResponse(processes); break;
+      case 'RR': result = roundRobinResponse(processes, timeQuantum); break;
+      default: result = fcfsResponse(processes);
     }
 
     setSchedulerResult(result);
-    // Reset playback on new run
     setPlaybackTime(0);
     setIsPlaying(true);
   };
@@ -80,62 +65,118 @@ export default function Home() {
   const visibleBlocks = schedulerResult
     ? schedulerResult.ganttChart.filter(b => b.startTime < playbackTime).map(b => ({
       ...b,
-      endTime: Math.min(b.endTime, playbackTime) // Clip end time to current playback
+      endTime: Math.min(b.endTime, playbackTime)
     }))
     : [];
 
-  // Determine current CPU process
-  const currentCpuBlock = schedulerResult?.ganttChart.find(b => b.startTime <= playbackTime && b.endTime > playbackTime);
+  const currentCpuBlock = schedulerResult?.ganttChart.find(b => b.startTime <= playbackTime && b.endTime > playbackTime && b.type === 'CPU');
   const currentCpuProcessId = currentCpuBlock ? currentCpuBlock.processId : null;
 
-  const totalTime = schedulerResult ? schedulerResult.ganttChart[schedulerResult.ganttChart.length - 1].endTime : 0;
+  // Find the actual process object running
+  const runningProcess = schedulerResult?.processes.find(p => p.id === currentCpuProcessId) || null;
+
+  // Active processes for memory map (not new, not terminated... roughly)
+  // For simplicity, we pass all processes to MemoryBlock, it filters internally based on status if we update status live?
+  // We need 'live' status. 
+  // Let's deduce live status: Arrived (<=time) AND Not Completed (completion > time).
+  const liveProcessesForMemory = schedulerResult ? schedulerResult.processes.map(p => {
+    // Clone to avoid mutating result state
+    const clone = { ...p };
+    if (p.arrivalTime > playbackTime) clone.status = 'NEW';
+    else if (p.completionTime <= playbackTime) clone.status = 'TERMINATED';
+    else clone.status = 'READY'; // Broad assumption, distinguishing Blocked/Running is harder without block map
+    return clone;
+  }) : [];
+
+  const totalTime = schedulerResult && schedulerResult.ganttChart.length > 0
+    ? schedulerResult.ganttChart[schedulerResult.ganttChart.length - 1].endTime
+    : 0;
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans">
-      <div className="max-w-6xl mx-auto">
-        <header className="mb-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-blue-900 mb-2">
-            CPU Scheduling Visualizer
-          </h1>
-          <p className="text-gray-600">
-            Interactive demonstration of Operating System scheduling algorithms.
-          </p>
+    <main className="min-h-screen bg-[#0f172a] p-4 text-gray-100 font-sans selection:bg-cyan-500/30">
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-0 border-b border-gray-800 pb-6 flex justify-between items-end backdrop-blur-sm sticky top-0 z-50 bg-[#0f172a]/80">
+          <div>
+            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 tracking-tight neon-text-blue">
+              CPU SCHEDULER
+            </h1>
+            <p className="text-gray-400 text-sm mt-1 font-mono">
+              <span className="text-blue-500">System.v2</span> // Interactive OS Kernel Simulation
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            {['visualizer', 'comparison'].map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode as ViewMode)}
+                className={`px-4 py-1.5 rounded-full text-xs font-mono tracking-wider transition-all border ${viewMode === mode
+                    ? 'bg-blue-500/20 border-blue-500 text-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
+                    : 'border-gray-700 text-gray-500 hover:border-gray-500'
+                  }`}
+              >
+                {mode.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </header>
 
-        {/* View Mode Toggle */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-white p-1 rounded-lg shadow-sm">
-            <button
-              onClick={() => setViewMode('visualizer')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'visualizer' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              Visualizer
-            </button>
-            <button
-              onClick={() => setViewMode('comparison')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'comparison' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              Comparison
-            </button>
-          </div>
-        </div>
+        {/* MAIN DASHBOARD */}
+        {viewMode === 'visualizer' ? (
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <InputForm
-          processes={processes}
-          setProcesses={setProcesses}
-          selectedAlgorithm={selectedAlgorithm}
-          setSelectedAlgorithm={setSelectedAlgorithm}
-          timeQuantum={timeQuantum}
-          setTimeQuantum={setTimeQuantum}
-          onRun={handleRunSimulation}
-        />
+            {/* LEFT COLUMN: Controls & Input (Span 3) */}
+            <div className="lg:col-span-3 space-y-6">
+              <div className="glass-panel p-4 rounded-xl shadow-lg">
+                <h2 className="text-xs font-mono text-gray-500 mb-4 uppercase tracking-widest border-b border-gray-800 pb-2">Configuration</h2>
+                <InputForm
+                  processes={processes}
+                  setProcesses={setProcesses}
+                  selectedAlgorithm={selectedAlgorithm}
+                  setSelectedAlgorithm={setSelectedAlgorithm}
+                  timeQuantum={timeQuantum}
+                  setTimeQuantum={setTimeQuantum}
+                  onRun={handleRunSimulation}
+                />
+              </div>
+            </div>
 
-        {viewMode === 'visualizer' && (
-          <>
-            {schedulerResult && (
-              <div className="space-y-8 animate-in fade-in zoom-in duration-300">
+            {/* MIDDLE COLUMN: Visualization (Span 6) */}
+            <div className="lg:col-span-6 space-y-6">
 
-                {/* Playback Controls */}
+              {/* Gantt Chart Area */}
+              <div className="glass-panel p-1 rounded-xl shadow-lg min-h-[160px] flex flex-col justify-center relative overflow-hidden">
+                {/* Background Grid Lines */}
+                <div className="absolute inset-0 opacity-10"
+                  style={{ backgroundImage: 'linear-gradient(#4b5563 1px, transparent 1px), linear-gradient(90deg, #4b5563 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+                </div>
+
+                <div className="p-4 relative z-10">
+                  <h2 className="text-xs font-mono text-gray-500 mb-2 uppercase tracking-widest text-right">CPU Timeline</h2>
+                  {schedulerResult ? (
+                    <GanttChart blocks={visibleBlocks} />
+                  ) : (
+                    <div className="text-center text-gray-600 font-mono text-xs py-10">
+                      [SYSTEM HALTED] <br /> PRESS RUN TO INITIALIZE SEQUENCE
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Queue Visualization */}
+              {schedulerResult && (
+                <div className="glass-panel p-4 rounded-xl shadow-lg">
+                  <ReadyQueue
+                    processes={processes}
+                    currentTime={playbackTime}
+                    cpuProcessId={currentCpuProcessId}
+                    scheduledBlocks={schedulerResult.ganttChart}
+                  />
+                </div>
+              )}
+
+              {/* Playback Controls */}
+              {schedulerResult && (
                 <PlaybackControls
                   totalTime={totalTime}
                   currentTime={playbackTime}
@@ -143,45 +184,38 @@ export default function Home() {
                   isPlaying={isPlaying}
                   setIsPlaying={setIsPlaying}
                 />
+              )}
+            </div>
 
-                {/* Ready Queue Vis */}
-                <ReadyQueue
-                  processes={processes}
-                  currentTime={playbackTime}
-                  cpuProcessId={currentCpuProcessId}
-                  scheduledBlocks={schedulerResult.ganttChart}
-                />
+            {/* RIGHT COLUMN: System Internals (Span 3) */}
+            <div className="lg:col-span-3 space-y-6">
+              {/* PCB View */}
+              <PCBView process={runningProcess as ProcessState | null} clock={playbackTime} />
 
-                {/* Gantt Chart (Animated Clips) */}
-                <GanttChart blocks={visibleBlocks} />
+              {/* Memory Map */}
+              <MemoryBlock processes={liveProcessesForMemory} totalMemory={1024} />
 
-                {/* Stats Charts */}
-                <StatsCharts results={schedulerResult} />
+              {/* Stats */}
+              {schedulerResult && (
+                <div className="glass-panel p-4 rounded-xl">
+                  <StatsCharts results={schedulerResult} />
+                </div>
+              )}
+            </div>
 
-                {/* Detailed Metrics Table */}
+            {/* FULL WIDTH: Metrics Table */}
+            {schedulerResult && (
+              <div className="lg:col-span-12 glass-panel p-4 rounded-xl">
                 <MetricsTable results={schedulerResult} />
               </div>
             )}
 
-            {/* Educational Info Section */}
-            <div className="mt-12 p-6 bg-white rounded-lg shadow-sm border-l-4 border-blue-500">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">About {selectedAlgorithm}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {selectedAlgorithm === 'FCFS' && "First-Come, First-Served (FCFS) is the simplest scheduling algorithm. Processes are executed in the order they arrive. It is non-preemptive."}
-                {selectedAlgorithm === 'SJF' && "Shortest Job First (SJF) selects the waiting process with the smallest execution time. Non-preemptive."}
-                {selectedAlgorithm === 'SRTF' && "Shortest Remaining Time First (SRTF) is the preemptive version of SJF."}
-                {selectedAlgorithm === 'Priority-NP' && "Priority Scheduling (Non-Preemptive) selects the process with the highest priority."}
-                {selectedAlgorithm === 'Priority-P' && "Priority Scheduling (Preemptive) allows higher priority processes to interpret running ones."}
-                {selectedAlgorithm === 'RR' && `Round Robin (RR) gives each process a time slice (Quantum = ${timeQuantum}).`}
-              </p>
-            </div>
-          </>
+          </div>
+        ) : (
+          <div className="mt-8">
+            <ComparisonView processes={processes} timeQuantum={timeQuantum} />
+          </div>
         )}
-
-        {viewMode === 'comparison' && (
-          <ComparisonView processes={processes} timeQuantum={timeQuantum} />
-        )}
-
       </div>
     </main>
   );

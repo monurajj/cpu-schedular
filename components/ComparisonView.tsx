@@ -34,29 +34,29 @@ export default function ComparisonView({ processes, timeQuantum }: ComparisonVie
     const maxTAT = Math.max(...results.map(r => r.res.averageTurnaroundTime));
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-xl font-bold mb-6 text-gray-800">Algorithm Comparison</h2>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 neon-text-blue">Algorithm Comparison</h2>
 
             {/* Table */}
-            <div className="overflow-x-auto mb-8">
-                <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
-                    <thead className="bg-gray-50">
+            <div className="overflow-hidden mb-8 border border-gray-700/50 rounded-lg">
+                <table className="min-w-full divide-y divide-gray-700/50">
+                    <thead className="bg-gray-800/50">
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Algorithm</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Avg Wait Time</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Avg Turnaround</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Utilization</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Throughput</th>
+                            <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Algorithm</th>
+                            <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Avg Wait Time</th>
+                            <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Avg Turnaround</th>
+                            <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Utilization</th>
+                            <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">Throughput</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-gray-900/40 divide-y divide-gray-700/50">
                         {results.map((item) => (
-                            <tr key={item.name} className="hover:bg-gray-50">
-                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">{item.res.averageWaitingTime.toFixed(2)}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">{item.res.averageTurnaroundTime.toFixed(2)}</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">{item.res.cpuUtilization}%</td>
-                                <td className="px-4 py-3 text-sm text-gray-700">{item.res.throughput}</td>
+                            <tr key={item.name} className="hover:bg-blue-500/10 transition-colors">
+                                <td className="px-4 py-3 text-xs font-medium text-gray-300 font-mono">{item.name}</td>
+                                <td className="px-4 py-3 text-xs text-gray-400 font-mono">{item.res.averageWaitingTime.toFixed(2)}</td>
+                                <td className="px-4 py-3 text-xs text-gray-400 font-mono">{item.res.averageTurnaroundTime.toFixed(2)}</td>
+                                <td className="px-4 py-3 text-xs text-gray-400 font-mono">{item.res.cpuUtilization}%</td>
+                                <td className="px-4 py-3 text-xs text-gray-400 font-mono">{item.res.throughput}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -66,38 +66,38 @@ export default function ComparisonView({ processes, timeQuantum }: ComparisonVie
             {/* Charts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Waiting Time Chart */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-md font-bold text-center text-gray-700 mb-4">Average Waiting Time (Lower is Better)</h3>
+                <div className="glass-panel p-4 rounded-xl">
+                    <h3 className="text-xs font-mono text-gray-500 mb-4 uppercase tracking-wider text-center">Avg Waiting Time (Lower is Better)</h3>
                     <div className="space-y-3">
                         {results.map(item => (
                             <div key={item.name} className="flex items-center text-xs">
-                                <div className="w-24 font-medium text-gray-600 truncate mr-2">{item.name}</div>
-                                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="w-24 font-mono text-gray-400 truncate mr-2">{item.name}</div>
+                                <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
                                     <div
-                                        className="h-full bg-blue-500"
+                                        className="h-full bg-blue-500/80 shadow-[0_0_5px_rgba(59,130,246,0.5)]"
                                         style={{ width: `${maxWT > 0 ? (item.res.averageWaitingTime / maxWT) * 100 : 0}%` }}
                                     ></div>
                                 </div>
-                                <div className="w-12 text-right text-gray-700 ml-2">{item.res.averageWaitingTime.toFixed(1)}</div>
+                                <div className="w-12 text-right text-gray-400 ml-2 font-mono">{item.res.averageWaitingTime.toFixed(1)}</div>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Turnaround Time Chart */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-md font-bold text-center text-gray-700 mb-4">Average Turnaround Time (Lower is Better)</h3>
+                <div className="glass-panel p-4 rounded-xl">
+                    <h3 className="text-xs font-mono text-gray-500 mb-4 uppercase tracking-wider text-center">Avg Turnaround Time (Lower is Better)</h3>
                     <div className="space-y-3">
                         {results.map(item => (
                             <div key={item.name} className="flex items-center text-xs">
-                                <div className="w-24 font-medium text-gray-600 truncate mr-2">{item.name}</div>
-                                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="w-24 font-mono text-gray-400 truncate mr-2">{item.name}</div>
+                                <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
                                     <div
-                                        className="h-full bg-green-500"
+                                        className="h-full bg-green-500/80 shadow-[0_0_5px_rgba(34,197,94,0.5)]"
                                         style={{ width: `${maxTAT > 0 ? (item.res.averageTurnaroundTime / maxTAT) * 100 : 0}%` }}
                                     ></div>
                                 </div>
-                                <div className="w-12 text-right text-gray-700 ml-2">{item.res.averageTurnaroundTime.toFixed(1)}</div>
+                                <div className="w-12 text-right text-gray-400 ml-2 font-mono">{item.res.averageTurnaroundTime.toFixed(1)}</div>
                             </div>
                         ))}
                     </div>

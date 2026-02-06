@@ -50,7 +50,8 @@ export default function ReadyQueue({
             }
         });
 
-        if (Math.abs(timeRun - p.burstTime) < 0.01) return 'COMPLETED';
+        const totalBurstTime = p.bursts.reduce((acc, b) => acc + (b.type === 'CPU' ? b.duration : 0), 0);
+        if (Math.abs(timeRun - totalBurstTime) < 0.01) return 'COMPLETED';
         if (p.id === cpuProcessId) return 'RUNNING';
 
         return 'READY';
@@ -59,26 +60,23 @@ export default function ReadyQueue({
     const readyProcesses = processes.filter(p => getProcessStatus(p) === 'READY');
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h3 className="text-sm font-bold text-gray-500 uppercase mb-4 tracking-wider">Ready Queue (at {currentTime}s)</h3>
+        <div className="mb-0">
+            <h3 className="text-xs font-mono text-gray-500 uppercase mb-2 tracking-widest pl-1">Process Queue</h3>
 
-            <div className="flex gap-4 min-h-[60px] p-4 bg-gray-50 rounded-lg overflow-x-auto items-center border border-dashed border-gray-300">
+            <div className="flex gap-2 min-h-[50px] p-2 bg-gray-900/40 rounded-lg overflow-x-auto items-center border border-dashed border-gray-700/50">
                 {readyProcesses.length === 0 ? (
-                    <div className="text-gray-400 text-sm italic w-full text-center">Queue Empty</div>
+                    <div className="text-gray-600 text-[10px] italic w-full text-center font-mono">IDLE</div>
                 ) : (
                     readyProcesses.map(p => (
                         <div
                             key={p.id}
-                            className="flex flex-col items-center justify-center min-w-[60px] h-14 bg-white border-l-4 border-blue-500 shadow-sm rounded-r-md px-3 animate-in slide-in-from-right duration-300"
+                            className="flex flex-col items-center justify-center min-w-[50px] h-10 bg-gray-800 border-l-2 border-blue-500 shadow-lg rounded-r px-2 animate-in slide-in-from-right duration-300"
                         >
-                            <div className="font-bold text-gray-800">{p.id}</div>
-                            <div className="text-[10px] text-gray-500">Bri: {p.priority}</div>
+                            <div className="font-bold text-gray-200 text-xs font-mono">{p.id}</div>
+                            <div className="text-[8px] text-gray-500">P{p.priority}</div>
                         </div>
                     ))
                 )}
-            </div>
-            <div className="text-[10px] text-gray-400 mt-2 text-right">
-                *Head of queue is Left
             </div>
         </div>
     );

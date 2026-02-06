@@ -1,41 +1,62 @@
-export type AlgorithmType = 
-  | 'FCFS' 
-  | 'SJF' 
-  | 'SRTF' 
-  | 'Priority-NP' 
-  | 'Priority-P' 
+
+export type AlgorithmType =
+  | 'FCFS'
+  | 'SJF'
+  | 'SRTF'
+  | 'Priority-NP'
+  | 'Priority-P'
   | 'RR';
+
+export type BurstType = 'CPU' | 'IO';
+
+export interface Burst {
+  type: BurstType;
+  duration: number;
+}
 
 export interface Process {
   id: string;
   arrivalTime: number;
-  burstTime: number;
-  priority: number; // Lower number usually means higher priority, we'll document this choice
+  priority: number; // Lower number usually means higher priority
   color?: string; // For visualization
+  bursts: Burst[];
+  memoryRequired?: number; // in MB
 }
 
-// Extended process interface for internal calculation (tracking remaining time etc)
+export type ProcessStatus = 'READY' | 'RUNNING' | 'BLOCKED' | 'TERMINATED' | 'NEW';
+
+// Extended process interface for internal calculation
 export interface ProcessState extends Process {
-  remainingTime: number;
-  startTime: number | null; // First time it got CPU
+  status: ProcessStatus;
+
+  // Tracking execution
+  currentBurstIndex: number;
+  remainingTimeCurrentBurst: number;
+
+  // Metrics
+  startTime: number | null; // First time it touched CPU
   completionTime: number;
-  waitingTime: number;
-  turnaroundTime: number;
-  responseTime: number;
-  isCompleted: boolean;
+  waitingTime: number; // Time spent in Ready Queue
+  turnaroundTime: number; // completion - arrival
+  responseTime: number; // time until first CPU response
+
+  // Utilization stats
+  totalCpuTime: number;
+  totalIoTime: number;
 }
 
 export interface GanttChartBlock {
-  processId: string; // 'IDLE' if cpu is idle
+  processId: string; // 'IDLE' or process ID
+  type: BurstType | 'IDLE';
   startTime: number;
   endTime: number;
 }
 
 export interface SchedulerResult {
-  processes: ProcessState[]; // with calculated metrics
+  processes: ProcessState[];
   ganttChart: GanttChartBlock[];
+  cpuUtilization: number;
+  throughput: number;
   averageWaitingTime: number;
   averageTurnaroundTime: number;
-  cpuUtilization: number;
-  throughput: number; // processes per unit time (or total processes / total time)
 }
