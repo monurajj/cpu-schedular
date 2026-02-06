@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f172a;
+  --background: #050505;
   --foreground: #e2e8f0;
 }
 
@@ -20,15 +20,15 @@
   }
 }
 
-/* Custom Utilities for Neon Effects */
+/* Custom Utilities for Cyberpunk Effects */
 .glass-panel {
-  @apply bg-gray-900/50 backdrop-blur-md border border-gray-700/50;
+  @apply bg-[#0a0a0a]/60 backdrop-blur-md border border-white/10 shadow-lg;
 }
 
 .neon-text-blue {
-  text-shadow: 0 0 5px #3b82f6, 0 0 10px #3b82f6;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
 
 .neon-border-blue {
-  box-shadow: 0 0 5px #3b82f6;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }

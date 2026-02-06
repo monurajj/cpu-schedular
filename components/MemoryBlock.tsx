@@ -43,39 +43,41 @@ export default function MemoryBlock({ processes, totalMemory = 1024 }: MemoryBlo
     const usedPercent = Math.min(100, (used / totalMemory) * 100);
 
     return (
-        <div className="bg-gray-900 border border-gray-700 p-4 rounded-lg shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-cyan-400 font-mono text-sm tracking-widest uppercase">Memory Map (RAM)</h3>
-                <span className="text-xs text-gray-400 font-mono">{used}MB / {totalMemory}MB</span>
+        <div className="glass-panel p-4 rounded-xl h-full flex flex-col">
+            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                <h3 className="text-gray-400 font-mono text-sm tracking-widest uppercase">Memory (RAM)</h3>
+                <span className="text-xs text-gray-500 font-mono">{used}MB / {totalMemory}MB</span>
             </div>
 
-            <div className="w-full h-4 bg-gray-800 rounded-full mb-4 overflow-hidden border border-gray-600">
+            <div className="w-full h-2 bg-white/5 rounded-full mb-6 overflow-hidden">
                 <div
-                    className="h-full bg-cyan-600 shadow-[0_0_10px_#06b6d4] transition-all duration-500"
+                    className="h-full bg-cyan-500/50 shadow-[0_0_10px_#06b6d4] transition-all duration-500 relative"
                     style={{ width: `${usedPercent}%` }}
-                ></div>
+                >
+                    <div className="absolute right-0 top-0 bottom-0 w-[1px] bg-white/50"></div>
+                </div>
             </div>
 
-            <div className="grid grid-cols-8 gap-1">
+            <div className="grid grid-cols-8 gap-1 auto-rows-min flex-1 content-start">
                 {memoryMap.map((block, i) => (
                     <div
                         key={i}
                         className={`
-                            h-6 rounded-sm text-[8px] flex items-center justify-center font-bold text-white transition-all duration-300
-                            ${block.status === 'FREE' ? 'bg-gray-800 border-gray-700 border' : 'border border-white/20'}
+                            aspect-square rounded-sm text-[6px] flex items-center justify-center font-bold text-white transition-all duration-300
+                            ${block.status === 'FREE' ? 'bg-white/5' : 'bg-transparent'}
                         `}
                         style={{
                             backgroundColor: block.status === 'OCCUPIED' ? (block.color || '#3b82f6') : undefined,
-                            boxShadow: block.status === 'OCCUPIED' ? `0 0 5px ${block.color}` : 'none'
+                            boxShadow: block.status === 'OCCUPIED' ? `0 0 5px ${block.color}` : 'none',
+                            opacity: block.status === 'FREE' ? 0.3 : 0.8
                         }}
                         title={block.status === 'OCCUPIED' ? `Block ${i}: ${block.processId}` : `Block ${i}: Free`}
                     >
-                        {block.processId || ''}
                     </div>
                 ))}
             </div>
-            <div className="mt-2 text-[10px] text-gray-500 font-mono text-right">
-                Block Size: {blockSize}MB
+            <div className="mt-2 text-[10px] text-gray-600 font-mono text-right">
+                Block: {blockSize}MB components
             </div>
         </div>
     );

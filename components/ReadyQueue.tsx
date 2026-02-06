@@ -1,59 +1,44 @@
 import React from 'react';
-import { Process, GanttChartBlock } from '@/lib/types';
+import { Process } from '@/lib/types';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Layers, ArrowRight } from 'lucide-react';
 
 interface ReadyQueueProps {
     processes: Process[];
     currentTime: number;
-    cpuProcessId: string | null; // The process currently on CPU
-    scheduledBlocks: GanttChartBlock[]; // To know who is done
+    cpuProcessId: string | null;
+    scheduledBlocks: { processId: string; startTime: number; endTime: number }[];
 }
 
-export default function ReadyQueue({
-    processes,
-    currentTime,
-    cpuProcessId,
-    scheduledBlocks
-}: ReadyQueueProps) {
+export default function ReadyQueue({ processes, currentTime, cpuProcessId, scheduledBlocks }: ReadyQueueProps) {
 
-    // Logic to find who is in Ready Queue
-    // Condition: 
-    // 1. Arrival Time <= Current Time
-    // 2. Not Completed fully yet (check max EndTime in blocks < current time?)
-    // 3. Not currently on CPU
-
-    // Actually, 'scheduledBlocks' contains the FULL schedule of the future.
-    // We need to know who is 'completed' relative to the currentTime.
-
-    // Let's derive the state purely from the schedule relative to currentTime.
-
-    // A process is "In Queue" if:
-    // - It has arrived (Arrival <= currentTime)
-    // - It is NOT the one running right now (cpuProcessId)
-    // - It has remaining burst time > 0 (We need to calculate this!)
-
+    // Helper to determine process status relative to playback time
     const getProcessStatus = (p: Process) => {
+        // 1. Future
         if (p.arrivalTime > currentTime) return 'FUTURE';
 
-        // Calculate remaining time for this process up to currentTime
-        // Sum up all blocks for this process that end BEFORE or AT currentTime
-        // Also count partial block if currently running?
-
+        // 2. Completed? 
+        // Calculate total duration scheduled for this process up to currentTime
         const processBlocks = scheduledBlocks.filter(b => b.processId === p.id);
         let timeRun = 0;
-
         processBlocks.forEach(b => {
             if (b.endTime <= currentTime) {
                 timeRun += (b.endTime - b.startTime);
             } else if (b.startTime < currentTime) {
-                // Partial run
                 timeRun += (currentTime - b.startTime);
             }
         });
 
-        const totalBurstTime = p.bursts.reduce((acc, b) => acc + (b.type === 'CPU' ? b.duration : 0), 0);
-        if (Math.abs(timeRun - totalBurstTime) < 0.01) return 'COMPLETED';
+        // Total required time
+        const totalBurst = p.bursts.reduce((acc, b) => acc + (b.type === 'CPU' ? b.duration : 0), 0);
+
+        // If run time >= total time, it's completed
+        if (timeRun >= totalBurst - 0.01) return 'COMPLETED';
+
+        // 3. Running?
         if (p.id === cpuProcessId) return 'RUNNING';
 
+        // 4. Ready (Arrived, not done, not running)
         return 'READY';
     };
 
@@ -61,22 +46,55 @@ export default function ReadyQueue({
 
     return (
         <div className="mb-0">
-            <h3 className="text-xs font-mono text-gray-500 uppercase mb-2 tracking-widest pl-1">Process Queue</h3>
+            <div className="flex items-center gap-2 mb-3 pl-1">
+                <Layers className="w-4 h-4 text-gray-500" />
+                <h3 className="text-xs font-mono text-gray-400 uppercase tracking-widest">Process Queue</h3>
+            </div>
 
-            <div className="flex gap-2 min-h-[50px] p-2 bg-gray-900/40 rounded-lg overflow-x-auto items-center border border-dashed border-gray-700/50">
-                {readyProcesses.length === 0 ? (
-                    <div className="text-gray-600 text-[10px] italic w-full text-center font-mono">IDLE</div>
-                ) : (
-                    readyProcesses.map(p => (
-                        <div
-                            key={p.id}
-                            className="flex flex-col items-center justify-center min-w-[50px] h-10 bg-gray-800 border-l-2 border-blue-500 shadow-lg rounded-r px-2 animate-in slide-in-from-right duration-300"
+            <div className="flex gap-3 min-h-[64px] p-3 bg-gray-900/40 rounded-xl overflow-x-auto items-center border border-dashed border-gray-700/50">
+                <AnimatePresence mode="popLayout">
+                    {readyProcesses.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="text-gray-600 text-[10px] italic w-full text-center font-mono flex items-center justify-center gap-2"
                         >
-                            <div className="font-bold text-gray-200 text-xs font-mono">{p.id}</div>
-                            <div className="text-[8px] text-gray-500">P{p.priority}</div>
-                        </div>
-                    ))
-                )}
+                            <span>[EMPTY]</span>
+                            <span className="w-1 h-1 bg-gray-600 rounded-full animate-pulse"></span>
+                        </motion.div>
+                    ) : (
+                        readyProcesses.map((p, index) => (
+                            <motion.div
+                                key={p.id}
+                                layout
+                                initial={{ opacity: 0, x: -20, scale: 0.9 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                className="flex items-center relative group"
+                            >
+                                <div className="flex flex-col items-center justify-center min-w-[56px] h-12 bg-gray-800/80 border-l-2 border-blue-500/80 shadow-[0_4px_10px_rgba(0,0,0,0.2)] rounded-r-lg px-2 backdrop-blur-sm hover:bg-gray-700/80 transition-colors relative overflow-hidden">
+                                    {/* Scanline effect */}
+                                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000"></div>
+
+                                    <div className="font-bold text-gray-200 text-xs font-mono z-10">{p.id}</div>
+                                    <div className="text-[9px] text-gray-500 uppercase tracking-wider scale-90 z-10">P{p.priority}</div>
+                                </div>
+
+                                {index < readyProcesses.length - 1 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="ml-2 text-gray-700"
+                                    >
+                                        <ArrowRight size={12} />
+                                    </motion.div>
+                                )}
+                            </motion.div>
+                        ))
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

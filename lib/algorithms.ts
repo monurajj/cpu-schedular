@@ -39,14 +39,14 @@ const runSimulation = (
     isPreemptive: boolean,
     quantum: number = Infinity
 ): SchedulerResult => {
-    let processes = initProcessStates(inputProcesses);
+    const processes = initProcessStates(inputProcesses);
 
     // Global Time
     let currentTime = 0;
 
     // Queues
-    let readyQueue: ProcessState[] = [];
-    let blockedQueue: ProcessState[] = []; // Processes in I/O
+    const readyQueue: ProcessState[] = [];
+    const blockedQueue: ProcessState[] = []; // Processes in I/O
 
     // Current Execution
     let runningProcess: ProcessState | null = null;
@@ -272,7 +272,7 @@ const sjfStrategy: PickProcessStrategy = (queue, running) => {
 const srtfStrategy: PickProcessStrategy = (queue, running) => {
     // Shortest Remaining Time
     // Compare running vs queue best
-    let bestCandidate = queue.length > 0
+    const bestCandidate = queue.length > 0
         ? [...queue].sort((a, b) => a.remainingTimeCurrentBurst - b.remainingTimeCurrentBurst)[0]
         : null;
 
@@ -318,7 +318,7 @@ export const priorityNonPreemptiveResponse = (processes: Process[]): SchedulerRe
 export const priorityPreemptiveResponse = (processes: Process[]): SchedulerResult => {
     // Need a strategy that compares running priority vs queue priority
     const strategy: PickProcessStrategy = (queue, running) => {
-        let bestCandidate = queue.length > 0
+        const bestCandidate = queue.length > 0
             ? [...queue].sort((a, b) => a.priority - b.priority)[0]
             : null;
 
