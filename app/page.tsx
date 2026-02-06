@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import InputForm from '@/components/InputForm';
-import PieChart from '@/components/PieChart';
+
 import MetricsTable from '@/components/MetricsTable';
+import GanttChart from '@/components/GanttChart';
 import ComparisonView from '@/components/ComparisonView';
 import PlaybackControls from '@/components/PlaybackControls';
 import ReadyQueue from '@/components/ReadyQueue';
