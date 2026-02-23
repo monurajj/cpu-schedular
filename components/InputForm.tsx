@@ -209,8 +209,9 @@ export default function InputForm({
                         </AnimatePresence>
                         {processes.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="px-3 py-8 text-center text-xs text-gray-600 italic font-mono">
-                                    -- NO DATA --
+                                <td colSpan={5} className="px-3 py-8 text-center">
+                                    <p className="text-xs text-gray-600 italic font-mono">-- NO PROCESSES --</p>
+                                    <p className="text-[10px] text-amber-500/80 mt-2">Add at least one process above, then click Initialize System</p>
                                 </td>
                             </tr>
                         )}
@@ -232,8 +233,7 @@ export default function InputForm({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={onRun}
-                    disabled={processes.length === 0}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-500 hover:to-cyan-500 text-xs font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg hover:from-blue-500 hover:to-cyan-500 text-xs font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all flex items-center justify-center gap-2"
                 >
                     <Play className="w-3 h-3 fill-current" /> Initialize System
                 </motion.button>
