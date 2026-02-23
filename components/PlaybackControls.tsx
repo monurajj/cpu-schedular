@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
+import { ChevronLeft, ChevronRight, RotateCcw, Play, Pause } from 'lucide-react';
 
 interface PlaybackControlsProps {
     totalTime: number;
     currentTime: number;
-    setCurrentTime: React.Dispatch<React.SetStateAction<number>>; // Allow functional update
+    setCurrentTime: React.Dispatch<React.SetStateAction<number>>;
     isPlaying: boolean;
     setIsPlaying: (playing: boolean) => void;
 }
@@ -27,7 +28,7 @@ export default function PlaybackControls({
                     }
                     return prev + 1;
                 });
-            }, 1000); // 1 second per time unit for visibility
+            }, 1000);
         }
         return () => clearInterval(interval);
     }, [isPlaying, totalTime, setCurrentTime, setIsPlaying]);
@@ -37,31 +38,49 @@ export default function PlaybackControls({
         setIsPlaying(false);
         setCurrentTime(0);
     };
+    const stepBack = () => {
+        setIsPlaying(false);
+        setCurrentTime((t) => Math.max(0, t - 1));
+    };
+    const stepForward = () => {
+        setIsPlaying(false);
+        setCurrentTime((t) => Math.min(totalTime, t + 1));
+    };
 
     return (
         <div className="bg-gray-900/40 p-3 rounded-lg border border-gray-700/50 mb-0 flex items-center justify-between shadow-lg">
             <div className="flex items-center gap-4 w-full">
-
-                {/* Controls */}
-                <div className="flex items-center gap-2">
+                {/* Step & Play Controls */}
+                <div className="flex items-center gap-1">
                     <button
                         onClick={reset}
-                        className="p-1.5 rounded-full hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
                         title="Reset"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12" /><path d="M3 3v9h9" /></svg>
+                        <RotateCcw className="w-4 h-4" />
                     </button>
-
+                    <button
+                        onClick={stepBack}
+                        disabled={currentTime <= 0}
+                        className="p-1.5 rounded-lg hover:bg-gray-700/50 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Step Backward"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
                     <button
                         onClick={togglePlay}
-                        className="p-2 rounded-full bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 border border-blue-500/30 transition-all shadow-[0_0_10px_rgba(59,130,246,0.2)]"
+                        className="p-2 rounded-full bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 border border-blue-500/30 transition-all"
                         title={isPlaying ? "Pause" : "Play"}
                     >
-                        {isPlaying ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
-                        ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                        )}
+                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    </button>
+                    <button
+                        onClick={stepForward}
+                        disabled={currentTime >= totalTime}
+                        className="p-1.5 rounded-lg hover:bg-gray-700/50 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title="Step Forward"
+                    >
+                        <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
 

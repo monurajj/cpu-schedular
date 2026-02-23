@@ -1,222 +1,250 @@
 'use client';
 
-import React, { useState } from 'react';
-import InputForm from '@/components/InputForm';
-
-import MetricsTable from '@/components/MetricsTable';
-import GanttChart from '@/components/GanttChart';
-import ComparisonView from '@/components/ComparisonView';
-import PlaybackControls from '@/components/PlaybackControls';
-import ReadyQueue from '@/components/ReadyQueue';
-import StatsCharts from '@/components/StatsCharts';
-import MemoryBlock from '@/components/MemoryBlock';
-import PCBView from '@/components/PCBView';
+import React from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 import {
-  Process,
-  SchedulerResult,
-  AlgorithmType,
-  ProcessState
-} from '@/lib/types';
-import {
-  fcfsResponse,
-  sjfResponse,
-  srtfResponse,
-  priorityNonPreemptiveResponse,
-  priorityPreemptiveResponse,
-  roundRobinResponse
-} from '@/lib/algorithms';
+  Lock,
+  AlertTriangle,
+  HardDrive,
+  Building2,
+  Zap,
+  ArrowRight,
+  Monitor,
+  BookOpen,
+  Briefcase,
+  Code2,
+  Layers,
+  Shield,
+} from 'lucide-react';
 
-type ViewMode = 'visualizer' | 'comparison';
+const cityAnalogy = [
+  {
+    icon: Building2,
+    title: 'CPU Scheduler',
+    analogy: 'Traffic Controller',
+    description: 'Like a traffic controller at intersections, the CPU scheduler decides which process gets to run next, managing the flow of "vehicles" (processes) through the system.',
+    path: '/cpu-scheduling',
+    color: 'from-cyan-500/20 to-blue-600/20',
+    border: 'border-cyan-500/30',
+  },
+  {
+    icon: Lock,
+    title: 'Process Synchronization',
+    analogy: 'Restroom Locks',
+    description: 'Mutexes and semaphores are like locks on restroom doors—ensuring only one thread enters the critical section at a time, preventing race conditions.',
+    path: '/synchronization/critical-section',
+    color: 'from-amber-500/20 to-orange-600/20',
+    border: 'border-amber-500/30',
+  },
+  {
+    icon: AlertTriangle,
+    title: 'Deadlocks',
+    analogy: 'Gridlock',
+    description: 'When two cars block each other waiting for the other to move—deadlock! The Resource Allocation Graph helps detect these circular waits.',
+    path: '/deadlocks/rag',
+    color: 'from-red-500/20 to-rose-600/20',
+    border: 'border-red-500/30',
+  },
+  {
+    icon: HardDrive,
+    title: 'Memory Management',
+    analogy: 'Warehouse Shelves',
+    description: 'RAM is like a warehouse. Paging divides it into fixed-size frames; processes get pages mapped to frames like boxes on shelves.',
+    path: '/memory/paging',
+    color: 'from-emerald-500/20 to-green-600/20',
+    border: 'border-emerald-500/30',
+  },
+];
 
-export default function Home() {
-  const [processes, setProcesses] = useState<Process[]>([
-    { id: 'P1', arrivalTime: 0, priority: 1, color: '#3b82f6', bursts: [{ type: 'CPU', duration: 5 }], memoryRequired: 128 },
-    { id: 'P2', arrivalTime: 1, priority: 2, color: '#22c55e', bursts: [{ type: 'CPU', duration: 3 }], memoryRequired: 256 },
-    { id: 'P3', arrivalTime: 2, priority: 1, color: '#eab308', bursts: [{ type: 'CPU', duration: 8 }], memoryRequired: 64 },
-  ]);
-
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState<AlgorithmType>('FCFS');
-  const [timeQuantum, setTimeQuantum] = useState<number>(2);
-  const [schedulerResult, setSchedulerResult] = useState<SchedulerResult | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('visualizer');
-
-  // Playback State
-  const [playbackTime, setPlaybackTime] = useState<number>(0);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-
-  const handleRunSimulation = () => {
-    let result: SchedulerResult;
-
-    switch (selectedAlgorithm) {
-      case 'FCFS': result = fcfsResponse(processes); break;
-      case 'SJF': result = sjfResponse(processes); break;
-      case 'SRTF': result = srtfResponse(processes); break;
-      case 'Priority-NP': result = priorityNonPreemptiveResponse(processes); break;
-      case 'Priority-P': result = priorityPreemptiveResponse(processes); break;
-      case 'RR': result = roundRobinResponse(processes, timeQuantum); break;
-      default: result = fcfsResponse(processes);
-    }
-
-    setSchedulerResult(result);
-    setPlaybackTime(0);
-    setIsPlaying(true);
-  };
-
-  // Derived state for visualization based on playbackTime
-  const visibleBlocks = schedulerResult
-    ? schedulerResult.ganttChart.filter(b => b.startTime < playbackTime).map(b => ({
-      ...b,
-      endTime: Math.min(b.endTime, playbackTime)
-    }))
-    : [];
-
-  const currentCpuBlock = schedulerResult?.ganttChart.find(b => b.startTime <= playbackTime && b.endTime > playbackTime && b.type === 'CPU');
-  const currentCpuProcessId = currentCpuBlock ? currentCpuBlock.processId : null;
-
-  // Find the actual process object running
-  const runningProcess = schedulerResult?.processes.find(p => p.id === currentCpuProcessId) || null;
-
-  // Active processes for memory map
-  const liveProcessesForMemory = schedulerResult ? schedulerResult.processes.map(p => {
-    const clone = { ...p };
-    if (p.arrivalTime > playbackTime) clone.status = 'NEW';
-    else if (p.completionTime <= playbackTime) clone.status = 'TERMINATED';
-    else clone.status = 'READY';
-    return clone;
-  }) : [];
-
-  const totalTime = schedulerResult && schedulerResult.ganttChart.length > 0
-    ? schedulerResult.ganttChart[schedulerResult.ganttChart.length - 1].endTime
-    : 0;
-
+export default function DashboardPage() {
   return (
-    <main className="min-h-screen bg-[#050505] p-4 text-gray-100 font-sans selection:bg-cyan-500/30">
-      <div className="max-w-[1400px] mx-auto">
-        <header className="mb-0 border-b border-gray-800 pb-6 flex justify-between items-end backdrop-blur-sm sticky top-0 z-50 bg-[#050505]/80">
-          <div>
-            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-400 tracking-tight">
-              CPU SCHEDULER
-            </h1>
-            <p className="text-gray-500 text-sm mt-1 font-mono">
-              <span className="text-gray-300">System.v2</span> <span className="opacity-50"> {'// Interactive OS Kernel Simulation'} </span>
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            {['visualizer', 'comparison'].map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode as ViewMode)}
-                className={`px-4 py-1.5 rounded-full text-xs font-mono tracking-wider transition-all border ${viewMode === mode
-                  ? 'bg-white/10 border-white/40 text-white shadow-[0_0_10px_rgba(255,255,255,0.2)]'
-                  : 'border-white/10 text-gray-500 hover:border-gray-500'
-                  }`}
-              >
-                {mode.toUpperCase()}
-              </button>
-            ))}
-          </div>
+    <div className="min-h-screen p-6 lg:p-10">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-6xl mx-auto"
+      >
+        {/* Header */}
+        <header className="mb-10">
+          <h1 className="text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-100 via-cyan-200 to-gray-400 tracking-tight">
+            OS-Interactive
+          </h1>
+          <p className="text-gray-500 mt-2 font-mono text-sm">
+            Operating Systems • Interactive Teaching Platform
+          </p>
         </header>
 
-        {/* MAIN DASHBOARD */}
-        {viewMode === 'visualizer' ? (
-          <div className="mt-6 flex flex-col gap-6">
+        {/* What is an OS */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="glass-panel rounded-2xl p-8 mb-8 border border-white/10"
+        >
+          <h2 className="text-xl font-semibold text-gray-200 mb-4 flex items-center gap-2">
+            <Monitor className="w-5 h-5 text-cyan-400" />
+            What is an Operating System?
+          </h2>
+          <p className="text-gray-400 leading-relaxed mb-6">
+            An <strong className="text-gray-300">Operating System (OS)</strong> is system software that acts as an intermediary between
+            computer hardware and application programs. It manages hardware resources—CPU, memory, storage, I/O devices—and
+            provides common services so that applications can run efficiently and securely.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-gray-900/40 border border-white/5">
+              <h3 className="text-sm font-mono text-cyan-400 mb-2">Core Functions</h3>
+              <ul className="text-sm text-gray-400 space-y-1.5">
+                <li>• <strong className="text-gray-300">Process Management</strong> — Scheduling, creation, termination</li>
+                <li>• <strong className="text-gray-300">Memory Management</strong> — Allocation, paging, virtual memory</li>
+                <li>• <strong className="text-gray-300">File Systems</strong> — Organization and access to data</li>
+                <li>• <strong className="text-gray-300">I/O & Device Management</strong> — Drivers, interrupts</li>
+                <li>• <strong className="text-gray-300">Security & Protection</strong> — Access control, isolation</li>
+              </ul>
+            </div>
+            <div className="p-4 rounded-xl bg-gray-900/40 border border-white/5">
+              <h3 className="text-sm font-mono text-cyan-400 mb-2">Examples</h3>
+              <ul className="text-sm text-gray-400 space-y-1.5">
+                <li>• <strong className="text-gray-300">Desktop</strong> — Windows, macOS, Linux</li>
+                <li>• <strong className="text-gray-300">Mobile</strong> — Android, iOS</li>
+                <li>• <strong className="text-gray-300">Embedded</strong> — RTOS, FreeRTOS</li>
+                <li>• <strong className="text-gray-300">Server</strong> — Linux, Windows Server</li>
+              </ul>
+            </div>
+          </div>
+        </motion.section>
 
-            {/* TOP SECTION: 3 Columns (3 | 6 | 3) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-              {/* COL 1: CONFIGURATION (Span 3) */}
-              <div className="lg:col-span-3">
-                <div className="glass-panel p-4 rounded-xl shadow-lg h-full">
-                  <h2 className="text-xs font-mono text-gray-500 mb-4 uppercase tracking-widest border-b border-white/10 pb-2">Configuration</h2>
-                  <InputForm
-                    processes={processes}
-                    setProcesses={setProcesses}
-                    selectedAlgorithm={selectedAlgorithm}
-                    setSelectedAlgorithm={setSelectedAlgorithm}
-                    timeQuantum={timeQuantum}
-                    setTimeQuantum={setTimeQuantum}
-                    onRun={handleRunSimulation}
-                  />
-                </div>
+        {/* Why Study OS / Use Cases */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="glass-panel rounded-2xl p-8 mb-8 border border-white/10"
+        >
+          <h2 className="text-xl font-semibold text-gray-200 mb-4 flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-cyan-400" />
+            Why Study Operating Systems?
+          </h2>
+          <p className="text-gray-400 leading-relaxed mb-6">
+            Understanding OS concepts is foundational for computer science and software engineering. It explains how
+            programs actually run, how resources are shared, and how to build efficient, reliable systems.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl bg-gray-900/40 border border-white/5 flex gap-3">
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center shrink-0">
+                <Code2 className="w-5 h-5 text-cyan-400" />
               </div>
-
-              {/* COL 2: MAIN VISUALIZATION (Span 6) */}
-              <div className="lg:col-span-6 space-y-6">
-                {/* Gantt Chart (Timeline) */}
-                <div className="glass-panel p-1 rounded-xl shadow-lg min-h-[180px] flex flex-col justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 opacity-5"
-                    style={{ backgroundImage: 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-                  </div>
-                  <div className="p-4 relative z-10">
-                    <h2 className="text-xs font-mono text-gray-500 mb-2 uppercase tracking-widest text-right">CPU Timeline</h2>
-                    {schedulerResult ? (
-                      <GanttChart blocks={visibleBlocks} />
-                    ) : (
-                      <div className="text-center text-gray-600 font-mono text-xs py-10">
-                        [SYSTEM HALTED] <br /> PRESS RUN TO INITIALIZE SEQUENCE
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Ready Queue & Playback */}
-                {schedulerResult && (
-                  <div className="grid grid-cols-1 gap-6">
-                    <div className="glass-panel p-4 rounded-xl shadow-lg">
-                      <ReadyQueue
-                        processes={processes}
-                        currentTime={playbackTime}
-                        cpuProcessId={currentCpuProcessId}
-                        scheduledBlocks={schedulerResult.ganttChart}
-                      />
-                    </div>
-                    <PlaybackControls
-                      totalTime={totalTime}
-                      currentTime={playbackTime}
-                      setCurrentTime={setPlaybackTime}
-                      isPlaying={isPlaying}
-                      setIsPlaying={setIsPlaying}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* COL 3: SYSTEM INTERNALS (Span 3) - Stacked Memory & PCB */}
-              <div className="lg:col-span-3 space-y-6">
-                {/* RAM Block - Fixed Height */}
-                <div className="h-64">
-                  <MemoryBlock processes={liveProcessesForMemory} totalMemory={1024} />
-                </div>
-
-                {/* PCB Block - Fixed Height, Below RAM */}
-                <div className="h-64">
-                  <PCBView process={runningProcess as ProcessState | null} clock={playbackTime} />
-                </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-200 mb-1">Systems Programming</h3>
+                <p className="text-xs text-gray-400">Write efficient code that interacts with the kernel, handles concurrency, and manages resources.</p>
               </div>
             </div>
-
-            {/* BOTTOM SECTION: Stats & Metrics (Half/Half) */}
-            {schedulerResult && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Stats Charts */}
-                <div className="glass-panel p-4 rounded-xl h-96">
-                  <StatsCharts results={schedulerResult} />
-                </div>
-
-                {/* Metrics Table */}
-                <div className="glass-panel p-4 rounded-xl h-96 overflow-y-auto">
-                  <MetricsTable results={schedulerResult} />
-                </div>
+            <div className="p-4 rounded-xl bg-gray-900/40 border border-white/5 flex gap-3">
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center shrink-0">
+                <Briefcase className="w-5 h-5 text-cyan-400" />
               </div>
-            )}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-200 mb-1">Career Relevance</h3>
+                <p className="text-xs text-gray-400">Kernel development, DevOps, cloud infrastructure, embedded systems, and performance tuning.</p>
+              </div>
+            </div>
+            <div className="p-4 rounded-xl bg-gray-900/40 border border-white/5 flex gap-3">
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center shrink-0">
+                <Layers className="w-5 h-5 text-cyan-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-200 mb-1">Problem-Solving</h3>
+                <p className="text-xs text-gray-400">Learn to reason about deadlocks, race conditions, scheduling trade-offs, and memory management.</p>
+              </div>
+            </div>
+            <div className="p-4 rounded-xl bg-gray-900/40 border border-white/5 flex gap-3">
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center shrink-0">
+                <Shield className="w-5 h-5 text-cyan-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-200 mb-1">Security & Reliability</h3>
+                <p className="text-xs text-gray-400">Understand isolation, privilege levels, and how vulnerabilities arise at the OS level.</p>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="mt-8">
-            <ComparisonView processes={processes} timeQuantum={timeQuantum} />
+        </motion.section>
+
+        {/* City Analogy */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="glass-panel rounded-2xl p-8 mb-8 border border-white/10"
+        >
+          <h2 className="text-xl font-semibold text-gray-200 mb-4 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-cyan-400" />
+            The City Infrastructure Analogy
+          </h2>
+          <p className="text-gray-400 leading-relaxed mb-4">
+            Think of an operating system as a bustling city. The <strong className="text-gray-300">CPU</strong> is the
+            traffic controller, <strong className="text-gray-300">processes</strong> are vehicles, <strong className="text-gray-300">memory</strong> is
+            warehouse space, and <strong className="text-gray-300">synchronization primitives</strong> are locks on shared
+            resources. This platform lets you visualize each concept through interactive simulations—perfect for teaching
+            and learning.
+          </p>
+          <p className="text-gray-400 text-sm">
+            Use the module cards below to explore each topic with <strong className="text-gray-300">Lecture Mode</strong> (step-by-step) or <strong className="text-gray-300">Sandbox Mode</strong> (hands-on experimentation).
+          </p>
+        </motion.section>
+
+        {/* Module Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {cityAnalogy.map((item, i) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.1 }}
+            >
+              <Link href={item.path}>
+                <div
+                  className={`
+                    glass-panel rounded-2xl p-6 h-full
+                    border transition-all duration-300
+                    hover:border-white/20 hover:shadow-[0_0_30px_rgba(6,182,212,0.1)]
+                    group cursor-pointer
+                    ${item.border}
+                  `}
+                >
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} border ${item.border} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <item.icon className="w-6 h-6 text-gray-300" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-1">{item.title}</h3>
+                  <p className="text-xs font-mono text-cyan-400/80 mb-3">≈ {item.analogy}</p>
+                  <p className="text-sm text-gray-400 leading-relaxed mb-4">{item.description}</p>
+                  <span className="inline-flex items-center gap-2 text-xs font-mono text-cyan-400 group-hover:gap-3 transition-all">
+                    Explore <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Quick Stats */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="mt-12 flex flex-wrap gap-4"
+        >
+          <div className="px-4 py-2 rounded-lg bg-gray-900/60 border border-white/5 text-xs font-mono text-gray-500">
+            24 Lecture Topics
           </div>
-        )}
-      </div>
-    </main>
+          <div className="px-4 py-2 rounded-lg bg-gray-900/60 border border-white/5 text-xs font-mono text-gray-500">
+            Lecture + Sandbox Modes
+          </div>
+          <div className="px-4 py-2 rounded-lg bg-gray-900/60 border border-white/5 text-xs font-mono text-gray-500">
+            Step-by-Step Animations
+          </div>
+        </motion.div>
+      </motion.div>
+    </div>
   );
 }
