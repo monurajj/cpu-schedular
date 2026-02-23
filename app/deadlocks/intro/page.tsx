@@ -13,6 +13,7 @@ import {
   Check,
   X,
 } from 'lucide-react';
+import DeadlockCycleVisual from '@/components/DeadlockCycleVisual';
 import ModeToggle from '@/components/ModeToggle';
 
 const CONDITIONS = [
@@ -88,6 +89,9 @@ export default function DeadlockIntroPage() {
                       <p className="text-sm text-gray-400">{c.desc}</p>
                     </div>
                   ))}
+                </div>
+                <div className="mt-6">
+                  <DeadlockCycleVisual processes={['P0', 'P1', 'P2', 'P3']} />
                 </div>
               </div>
 

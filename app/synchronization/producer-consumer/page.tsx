@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Lock,
 } from 'lucide-react';
+import ProducerConsumerFlow from '@/components/ProducerConsumerFlow';
 import ModeToggle from '@/components/ModeToggle';
 
 const BUFFER_SIZE = 5;
@@ -74,6 +75,9 @@ export default function ProducerConsumerPage() {
                 <p className="text-gray-400 leading-relaxed mb-4">
                   <strong className="text-cyan-400">Producers</strong> add items to a shared buffer; <strong className="text-cyan-400">consumers</strong> remove them. Without synchronization: buffer overflow (producer adds when full) or underflow (consumer removes when empty). The buffer has a fixed size N.
                 </p>
+                <div className="mb-6">
+                  <ProducerConsumerFlow buffer={[42, 17, 88]} bufferSize={BUFFER_SIZE} />
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
                     <h4 className="font-mono text-amber-400 mb-2">Overflow</h4>
@@ -161,6 +165,9 @@ while (true) {
                 <p className="text-gray-500 text-sm mb-6">
                   Simulate producer (add) and consumer (remove). Buffer size: {BUFFER_SIZE}. Producer blocks when full; consumer blocks when empty.
                 </p>
+                <div className="mb-6">
+                  <ProducerConsumerFlow buffer={buffer} bufferSize={BUFFER_SIZE} />
+                </div>
                 <div className="flex gap-4 mb-6">
                   <motion.button
                     onClick={produce}

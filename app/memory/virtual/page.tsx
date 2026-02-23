@@ -12,6 +12,7 @@ import {
   HardDrive,
   Cpu,
 } from 'lucide-react';
+import VirtualMemoryVisual from '@/components/VirtualMemoryVisual';
 import ModeToggle from '@/components/ModeToggle';
 
 const PAGES = 8;
@@ -57,10 +58,11 @@ export default function VirtualMemoryPage() {
                 <p className="text-gray-400 leading-relaxed mb-4">
                   Processes can use an address space <strong className="text-cyan-400">larger than physical RAM</strong>. Only needed pages reside in memory; the rest stay on disk. Enables multiprogramming and memory abstraction.
                 </p>
-                <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30">
+                <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30 mb-6">
                   <h4 className="font-mono text-cyan-400 mb-2">Demand Paging</h4>
                   <p className="text-sm text-gray-400">Pages are loaded only when accessed (on demand). Reduces initial load time and memory use.</p>
                 </div>
+                <VirtualMemoryVisual inRAM={[0, 1, 2, 3]} onDisk={[4, 5, 6, 7]} accessing={4} />
               </div>
 
               <div className="glass-panel rounded-2xl p-8">

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import ModeToggle from '@/components/ModeToggle';
 import RaceConditionVisual from '@/components/RaceConditionVisual';
+import BankAccountVisual from '@/components/BankAccountVisual';
 
 export default function CriticalSectionPage() {
   const [mode, setMode] = useState<'lecture' | 'sandbox'>('lecture');
@@ -155,9 +156,10 @@ export default function CriticalSectionPage() {
                   <AlertTriangle className="w-5 h-5 text-amber-400" />
                   Real-World Example
                 </h2>
-                <p className="text-gray-400 leading-relaxed">
+                <p className="text-gray-400 leading-relaxed mb-6">
                   A joint bank account where two people withdraw money at the exact same millisecond. Without synchronization, both read the same balance, both subtract, and both write—corrupting the final value. The withdrawal logic is a <strong className="text-cyan-400">Critical Section</strong> that must be protected.
                 </p>
+                <BankAccountVisual />
               </div>
             </motion.div>
           ) : (

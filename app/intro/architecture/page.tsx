@@ -16,6 +16,7 @@ import {
   Info,
 } from 'lucide-react';
 import ModeToggle from '@/components/ModeToggle';
+import ArchitectureDiagram from '@/components/ArchitectureDiagram';
 
 const designDilemma = [
   {
@@ -107,9 +108,47 @@ export default function ArchitecturePage() {
                 <p className="text-gray-400 leading-relaxed mb-6">
                   OS designers face a fundamental trade-off: put everything in the kernel for speed, or keep the kernel minimal for safety and modularity.
                 </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, type: 'spring' as const, stiffness: 300, damping: 24 }}
+                  >
+                    <ArchitectureDiagram type="monolithic" interactive={true} />
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, type: 'spring' as const, stiffness: 300, damping: 24 }}
+                  >
+                    <ArchitectureDiagram type="microkernel" interactive={true} />
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, type: 'spring' as const, stiffness: 300, damping: 24 }}
+                  >
+                    <ArchitectureDiagram type="hybrid" interactive={true} />
+                  </motion.div>
+                </div>
+                <p className="text-xs text-gray-500 mb-4 text-center">
+                  Hover over blocks to see what each component does
+                </p>
+                <div className="mb-6 p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/20">
+                  <p className="text-sm text-gray-300">
+                    <strong className="text-cyan-400">Key insight:</strong> Notice how the kernel (amber) shrinks from monolithic → microkernel. 
+                    More in user space = safer but slower. Hybrid (macOS) keeps Mach minimal and pushes BSD services into a separate layer.
+                  </p>
+                </div>
                 <div className="space-y-4">
-                  {designDilemma.map((item) => (
-                    <div key={item.id} className={`p-5 rounded-xl border ${item.border} ${item.color}`}>
+                  {designDilemma.map((item, i) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 + i * 0.08, type: 'spring' as const, stiffness: 300, damping: 24 }}
+                      className={`p-5 rounded-xl border ${item.border} ${item.color} hover:border-opacity-60 transition-colors`}
+                    >
                       <div className="flex items-start gap-3">
                         <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                           <item.icon className="w-5 h-5 text-gray-200" />
@@ -124,7 +163,7 @@ export default function ArchitecturePage() {
                         </div>
                         <span className="text-xs font-mono text-gray-500 shrink-0">e.g., {item.examples.join(', ')}</span>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -202,6 +241,21 @@ export default function ArchitecturePage() {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
+              <div className="glass-panel rounded-2xl p-8">
+                <h2 className="text-lg font-semibold text-gray-200 mb-2 flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-cyan-400" />
+                  Kernel vs User Space
+                </h2>
+                <p className="text-gray-500 text-sm mb-6">
+                  Hover over each block to see what it does. Compare how kernel size changes across architectures.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <ArchitectureDiagram type="monolithic" interactive={true} />
+                  <ArchitectureDiagram type="microkernel" interactive={true} />
+                  <ArchitectureDiagram type="hybrid" interactive={true} />
+                </div>
+              </div>
+
               <div className="glass-panel rounded-2xl p-8">
                 <h2 className="text-lg font-semibold text-gray-200 mb-2 flex items-center gap-2">
                   <Layers className="w-5 h-5 text-cyan-400" />

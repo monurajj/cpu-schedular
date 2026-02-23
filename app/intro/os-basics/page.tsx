@@ -20,6 +20,7 @@ import {
   Zap,
 } from 'lucide-react';
 import ModeToggle from '@/components/ModeToggle';
+import OSLayersVisual from '@/components/OSLayersVisual';
 
 const osLayers = [
   {
@@ -174,6 +175,9 @@ export default function OSBasicsPage() {
                 <p className="text-gray-400 leading-relaxed mb-6">
                   Data and requests flow through layers: from <strong className="text-gray-300">Users</strong> → <strong className="text-gray-300">Applications</strong> → <strong className="text-gray-300">OS (Kernel)</strong> → <strong className="text-gray-300">Hardware</strong>. The OS sits in the middle, managing access and resources.
                 </p>
+                <div className="mb-8">
+                  <OSLayersVisual />
+                </div>
                 <div className="flex flex-col gap-2">
                   {osLayers.map((layer, i) => (
                     <div
