@@ -40,6 +40,7 @@ import {
   Users,
   BarChart3,
   Zap,
+  BookMarked,
 } from 'lucide-react';
 import { syllabus, SyllabusModule } from '@/lib/syllabus';
 
@@ -73,6 +74,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   RefreshCw,
   Folder,
   Disc,
+  BookMarked,
 };
 
 function getIcon(name: string) {
@@ -83,7 +85,7 @@ function getIcon(name: string) {
 export default function Sidebar() {
   const pathname = usePathname();
   const [expandedModules, setExpandedModules] = useState<Set<string>>(
-    new Set(['dashboard', 'process'])
+    new Set(['dashboard', 'process', 'reference'])
   );
   const [collapsed, setCollapsed] = useState(false);
 
@@ -215,7 +217,7 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="p-4 border-t border-white/5">
             <p className="text-[10px] text-gray-600 font-mono">
-              24 Topics • OS Fundamentals
+              25 Topics • OS Fundamentals
             </p>
           </div>
         )}

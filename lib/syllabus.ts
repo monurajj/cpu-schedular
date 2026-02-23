@@ -92,6 +92,14 @@ export const syllabus: SyllabusModule[] = [
       { id: '24', title: 'Disk Scheduling', path: '/storage/disk-scheduling', module: 'storage', icon: 'Disc' },
     ],
   },
+  {
+    id: 'reference',
+    title: 'Reference',
+    icon: 'BookMarked',
+    topics: [
+      { id: '25', title: 'Dictionary', path: '/dictionary', module: 'reference', icon: 'Search' },
+    ],
+  },
 ];
 
 // Flatten all topics for quick lookup

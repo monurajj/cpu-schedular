@@ -9,6 +9,7 @@ import {
   Zap,
   ArrowRight,
 } from 'lucide-react';
+import DiskCylinderVisual from '@/components/DiskCylinderVisual';
 import ModeToggle from '@/components/ModeToggle';
 
 type Algo = 'fcfs' | 'sstf' | 'scan' | 'cscan';
@@ -114,6 +115,9 @@ export default function DiskSchedulingPage() {
                 <p className="text-gray-400 leading-relaxed mb-4">
                   A disk has cylinders (tracks). The read/write head moves to service requests. <strong className="text-cyan-400">Seek time</strong> dominates; scheduling order affects total head movement.
                 </p>
+                <div className="mt-6">
+                  <DiskCylinderVisual requests={[98, 183, 37, 122, 14, 124, 65, 67]} headPosition={53} maxCylinder={199} />
+                </div>
               </div>
 
               <div className="glass-panel rounded-2xl p-8">
@@ -210,6 +214,9 @@ export default function DiskSchedulingPage() {
                   </div>
                 </div>
 
+                <div className="mb-4">
+                  <DiskCylinderVisual requests={requests} headPosition={head} maxCylinder={maxCyl} serviceOrder={result.order} />
+                </div>
                 <div className="p-4 rounded-xl bg-gray-900/40 border border-white/5 mb-4">
                   <h4 className="font-mono text-cyan-400 mb-2">Service order</h4>
                   <div className="flex flex-wrap gap-2">

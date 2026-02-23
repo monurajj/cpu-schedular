@@ -11,20 +11,23 @@ import {
   Layers,
   Cpu,
   HardDrive,
+  Play,
 } from 'lucide-react';
+import MemoryHierarchyPyramid from '@/components/MemoryHierarchyPyramid';
 import ModeToggle from '@/components/ModeToggle';
 
-const HIERARCHY = [
-  { name: 'Registers', speed: '~1 ns', size: 'KB', color: 'cyan' },
-  { name: 'L1 Cache', speed: '~1 ns', size: 'KB', color: 'cyan' },
-  { name: 'L2 Cache', speed: '~4 ns', size: 'MB', color: 'cyan' },
-  { name: 'RAM', speed: '~100 ns', size: 'GB', color: 'amber' },
-  { name: 'SSD/HDD', speed: '~100 μs', size: 'TB', color: 'gray' },
+const HIERARCHY_LEVELS = [
+  { name: 'SSD/HDD', delay: 0 },
+  { name: 'RAM', delay: 1 },
+  { name: 'L2 Cache', delay: 2 },
+  { name: 'L1 Cache', delay: 3 },
+  { name: 'Registers', delay: 4 },
 ];
 
 export default function MemoryOverviewPage() {
   const [mode, setMode] = useState<'lecture' | 'sandbox'>('lecture');
-  const [hovered, setHovered] = useState<number | null>(null);
+  const [simulating, setSimulating] = useState(false);
+  const [simulatingLevel, setSimulatingLevel] = useState<number>(-1);
 
   return (
     <div className="min-h-screen p-6 lg:p-10">
@@ -74,19 +77,14 @@ export default function MemoryOverviewPage() {
                 <p className="text-gray-400 leading-relaxed mb-6">
                   Faster memory is smaller and closer to the CPU. The OS manages movement between levels (caching, paging).
                 </p>
-                <div className="space-y-2">
-                  {HIERARCHY.map((level, i) => (
-                    <div
-                      key={level.name}
-                      className="flex items-center gap-4 p-3 rounded-xl bg-gray-900/40 border border-white/5"
-                    >
-                      <div className={`w-2 h-8 rounded ${level.color === 'cyan' ? 'bg-cyan-500/50' : level.color === 'amber' ? 'bg-amber-500/50' : 'bg-gray-500/50'}`} />
-                      <div className="flex-1">
-                        <span className="font-mono text-gray-200">{level.name}</span>
-                        <span className="text-gray-500 text-sm ml-2">— {level.speed} • {level.size}</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="mb-4">
+                  <MemoryHierarchyPyramid interactive={true} />
+                </div>
+                <div className="mt-6 p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/20">
+                  <p className="text-sm text-gray-300">
+                    <strong className="text-cyan-400">Key insight:</strong> A cache hit in L1 is ~100× faster than a RAM access. 
+                    When data isn&apos;t in cache, the CPU must fetch from lower levels—this is why cache-friendly code matters.
+                  </p>
                 </div>
               </div>
 
@@ -122,40 +120,47 @@ export default function MemoryOverviewPage() {
                   Memory Hierarchy Visualizer
                 </h2>
                 <p className="text-gray-500 text-sm mb-6">
-                  Hover over each level to see speed and size. Faster = closer to CPU.
+                  Click levels to expand details. Use the simulation to see how data moves up the hierarchy on a cache miss.
                 </p>
-                <div className="flex flex-col items-center gap-2">
-                  <Cpu className="w-8 h-8 text-cyan-400 mb-2" />
-                  {HIERARCHY.map((level, i) => (
-                    <motion.div
-                      key={level.name}
-                      onMouseEnter={() => setHovered(i)}
-                      onMouseLeave={() => setHovered(null)}
-                      className={`w-full max-w-sm p-4 rounded-xl border transition-all cursor-default ${
-                        hovered === i ? 'bg-cyan-500/10 border-cyan-500/40' : 'bg-gray-900/40 border-white/5'
-                      }`}
-                      whileHover={{ x: 4 }}
+                <div className="mb-6">
+                  <MemoryHierarchyPyramid interactive={true} />
+                </div>
+                <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-gray-900/40 border border-white/5">
+                  <h3 className="text-sm font-semibold text-gray-300">Simulate cache miss</h3>
+                  <p className="text-xs text-gray-500 text-center max-w-md">
+                    When data isn&apos;t in cache, the CPU fetches from lower levels. Watch the path from disk to registers.
+                  </p>
+                  <motion.button
+                    onClick={() => {
+                      if (simulating) return;
+                      setSimulating(true);
+                      setSimulatingLevel(-1);
+                      HIERARCHY_LEVELS.forEach((_, i) => {
+                        setTimeout(() => setSimulatingLevel(i), i * 400);
+                      });
+                      setTimeout(() => {
+                        setSimulating(false);
+                        setSimulatingLevel(-1);
+                      }, HIERARCHY_LEVELS.length * 400 + 500);
+                    }}
+                    disabled={simulating}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 hover:bg-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed font-mono text-sm"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Play className="w-4 h-4" />
+                    {simulating ? 'Fetching...' : 'Run simulation'}
+                  </motion.button>
+                  {simulating && simulatingLevel >= 0 && (
+                    <motion.p
+                      key={simulatingLevel}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-xs text-cyan-400 font-mono"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-gray-200">{level.name}</span>
-                        <span className="text-xs text-gray-500">{level.speed} • {level.size}</span>
-                      </div>
-                      {hovered === i && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-xs text-gray-500 mt-2"
-                        >
-                          {level.name === 'RAM' && 'Main memory for processes. OS manages allocation.'}
-                          {level.name === 'L1 Cache' && 'Fastest cache, on-chip. Typically 32–64 KB.'}
-                          {level.name === 'L2 Cache' && 'Larger cache, shared between cores.'}
-                          {level.name === 'Registers' && 'Fastest storage, directly in CPU.'}
-                          {level.name === 'SSD/HDD' && 'Backing store for virtual memory.'}
-                        </motion.p>
-                      )}
-                    </motion.div>
-                  ))}
-                  <HardDrive className="w-8 h-8 text-gray-500 mt-2" />
+                      → {HIERARCHY_LEVELS[simulatingLevel].name}
+                    </motion.p>
+                  )}
                 </div>
               </div>
 

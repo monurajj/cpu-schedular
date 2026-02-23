@@ -9,6 +9,7 @@ import {
   Zap,
   ArrowRight,
 } from 'lucide-react';
+import PageFramesVisual from '@/components/PageFramesVisual';
 import ModeToggle from '@/components/ModeToggle';
 
 type Algo = 'fifo' | 'lru' | 'optimal';
@@ -144,6 +145,9 @@ export default function PageReplacementPage() {
                 <p className="text-gray-400 leading-relaxed mb-4">
                   When a page fault occurs and all frames are full, a <strong className="text-cyan-400">victim</strong> must be chosen. The replacement algorithm affects performance (number of page faults).
                 </p>
+                <div className="mt-6">
+                  <PageFramesVisual frames={[7, 0, 1, 2]} reference={1} />
+                </div>
               </div>
 
               <div className="glass-panel rounded-2xl p-8">
