@@ -371,17 +371,12 @@ export default function OSBasicsPage() {
                   {osTypes.map((type) => (
                     <motion.div
                       key={type.id}
-                      className="rounded-xl border border-white/10 overflow-hidden bg-gray-900/40"
+                      className="rounded-xl border border-white/10 overflow-hidden bg-gray-900/40 relative"
+                      onMouseEnter={() => setExpandedType(type.id)}
+                      onMouseLeave={() => setExpandedType(null)}
                       layout
                     >
-                      <button
-                        onClick={() =>
-                          setExpandedType(
-                            expandedType === type.id ? null : type.id,
-                          )
-                        }
-                        className="w-full p-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
-                      >
+                      <div className="w-full p-4 flex items-center justify-between text-left transition-colors relative z-10 cursor-default">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
                             <type.icon className="w-5 h-5 text-cyan-400" />
@@ -390,12 +385,7 @@ export default function OSBasicsPage() {
                             {type.title}
                           </span>
                         </div>
-                        {expandedType === type.id ? (
-                          <ChevronUp className="w-4 h-4 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-gray-500" />
-                        )}
-                      </button>
+                      </div>
                       <AnimatePresence>
                         {expandedType === type.id && (
                           <motion.div
